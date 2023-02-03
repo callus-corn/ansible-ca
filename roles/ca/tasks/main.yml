@@ -127,7 +127,7 @@
 - name: create ica
   command: >-
     openssl ca
-    -config {{ ca_cert_dir }}/ica/{{ ansible_ica_cnf_file }}
+    -config {{ ca_cert_dir }}/ica/{{ ansible_ca_cnf_file }}
     -in /tmp/ica.csr
     -out {{ ca_cert_dir }}/ica/ica.crt
     -days 3650
