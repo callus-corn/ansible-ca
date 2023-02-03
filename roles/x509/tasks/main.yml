@@ -1,5 +1,14 @@
 ---
 
+- name: put csr
+  copy:
+    src: ""
+    dest: "/tmp/{{ item }}.csr"
+    owner: root
+    group: root
+    mode: 0644
+  loop: "{{ ca_cert_list }}"
+
 - name: create csr
   command: >-
     openssl req
@@ -12,7 +21,7 @@
 - name: create crt
   command: >-
     openssl ca
-    -config {{ ca_cert_dir }}/{{ item }}/{{ item }}.cnf
+    -config {{ ca_cert_dir }}/ica/{{ ansible_ica_cnf_file }}
     -in /tmp/{{ item }}.csr
     -out {{ ca_cert_dir }}/{{ item }}/{{ item }}.crt
     -batch
