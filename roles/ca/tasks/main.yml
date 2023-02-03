@@ -17,16 +17,33 @@
     - "{{ ca_ica_dir }}/certs"
     - "{{ ca_cert_dir }}/ica"
 
-- name: put db file
+- name: check db index
+  stat:
+    path: "{{ ca_ca_dir }}/db/index"
+  register: ca_db_index_stat
+
+- name: put db index
   copy:
-    src: "{{ item }}"
-    dest: "{{ ca_ca_dir }}/db/{{ item }}"
+    src: index
+    dest: "{{ ca_ca_dir }}/db/index"
     owner: "root"
     group: "root"
     mode: 0644
-  loop:
-    - index
-    - crlnumber
+  when: not ca_db_index_stat.stat.exists
+
+- name: check db crlnumber
+  stat:
+    path: "{{ ca_ca_dir }}/db/crlnumber"
+  register: ca_db_crlnumber_stat
+
+- name: put db crlnumber
+  copy:
+    src: crlnumber
+    dest: "{{ ca_ca_dir }}/db/crlnumber"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  when: not ca_db_crlnumber_stat.stat.exists
 
 - name: put ca key
   copy:
@@ -83,16 +100,33 @@
     -crldays 365
   when: not ca_stat.stat.exists
 
-- name: put db file
+- name: check db index
+  stat:
+    path: "{{ ca_ica_dir }}/db/index"
+  register: ica_db_index_stat
+
+- name: put db index
   copy:
-    src: "{{ item }}"
-    dest: "{{ ca_ica_dir }}/db/{{ item }}"
+    src: index
+    dest: "{{ ca_ica_dir }}/db/index"
     owner: "root"
     group: "root"
     mode: 0644
-  loop:
-    - index
-    - crlnumber
+  when: not ica_db_index_stat.stat.exists
+
+- name: check db crlnumber
+  stat:
+    path: "{{ ca_ica_dir }}/db/crlnumber"
+  register: ica_db_crlnumber_stat
+
+- name: put db crlnumber
+  copy:
+    src: crlnumber
+    dest: "{{ ca_ica_dir }}/db/crlnumber"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  when: not ica_db_crlnumber_stat.stat.exists
 
 - name: put ica key
   copy:
@@ -127,7 +161,7 @@
 - name: create ica
   command: >-
     openssl ca
-    -config {{ ca_cert_dir }}/ica/{{ ansible_ca_cnf_file }}
+    -config {{ ca_cert_dir }}/ca/{{ ansible_ca_cnf_file }}
     -in /tmp/ica.csr
     -out {{ ca_cert_dir }}/ica/ica.crt
     -days 3650
