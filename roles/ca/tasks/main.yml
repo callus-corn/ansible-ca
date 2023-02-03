@@ -1,0 +1,148 @@
+---
+
+- name: make dir
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: 0755
+  loop:
+    - "{{ ca_ca_dir }}"
+    - "{{ ca_ca_dir }}/db"
+    - "{{ ca_ca_dir }}/certs"
+    - "{{ ca_cert_dir }}/ca"
+    - "{{ ca_ica_dir }}"
+    - "{{ ca_ica_dir }}/db"
+    - "{{ ca_ica_dir }}/certs"
+    - "{{ ca_cert_dir }}/ica"
+
+- name: put db file
+  copy:
+    src: "{{ item }}"
+    dest: "{{ ca_ca_dir }}/db/{{ item }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  loop:
+    - index
+    - crlnumber
+
+- name: put ca key
+  copy:
+    src: "{{ ansible_ca_dir }}/{{ ansible_ca_key_file }}"
+    dest: "{{ ca_cert_dir }}/ca/{{ ansible_ca_key_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: put ca cnf
+  copy:
+    src: "{{ ansible_ca_dir }}/{{ ansible_ca_cnf_file }}"
+    dest: "{{ ca_cert_dir }}/ca/{{ ansible_ca_cnf_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: check ca
+  stat:
+    path: "{{ ca_cert_dir }}/ca/ca.crt"
+  register: ca_stat
+
+- name: create ca csr
+  command: >-
+    openssl req
+    -new
+    -out /tmp/ca.csr
+    -key {{ ca_cert_dir }}/ca/{{ ansible_ca_key_file }}
+    -config {{ ca_cert_dir }}/ca/{{ ansible_ca_cnf_file }}
+  when: not ca_stat.stat.exists
+
+- name: create ca
+  command: >-
+    openssl ca
+    -config {{ ca_cert_dir }}/ca/{{ ansible_ca_cnf_file }}
+    -in /tmp/ca.csr
+    -out {{ ca_cert_dir }}/ca/ca.crt
+    -keyfile {{ ca_cert_dir }}/ca/{{ ansible_ca_key_file }}
+    -selfsign
+    -days 36500
+    -batch
+    -rand_serial
+    {% if ca_ca_extensions is defined %}
+    -extensions {{ ca_ca_extensions }}
+    {% endif %}
+  when: not ca_stat.stat.exists
+
+- name: create ca crl
+  command: >-
+    openssl ca
+    -gencrl
+    -config {{ ca_cert_dir }}/ca/{{ ansible_ca_cnf_file }}
+    -out {{ ca_cert_dir }}/ca/ca.crl
+    -crldays 365
+  when: not ca_stat.stat.exists
+
+- name: put db file
+  copy:
+    src: "{{ item }}"
+    dest: "{{ ca_ica_dir }}/db/{{ item }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  loop:
+    - index
+    - crlnumber
+
+- name: put ica key
+  copy:
+    src: "{{ ansible_ica_dir }}/{{ ansible_ica_key_file }}"
+    dest: "{{ ca_cert_dir }}/ica/{{ ansible_ica_key_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: put ica cnf
+  copy:
+    src: "{{ ansible_ica_dir }}/{{ ansible_ica_cnf_file }}"
+    dest: "{{ ca_cert_dir }}/ica/{{ ansible_ica_cnf_file }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: check ica
+  stat:
+    path: "{{ ca_cert_dir }}/ica/ica.crt"
+  register: ica_stat
+
+- name: create ica csr
+  command: >-
+    openssl req
+    -new
+    -out /tmp/ica.csr
+    -key {{ ca_cert_dir }}/ica/{{ ansible_ica_key_file }}
+    -config {{ ca_cert_dir }}/ica/{{ ansible_ica_cnf_file }}
+  when: not ica_stat.stat.exists
+
+- name: create ica
+  command: >-
+    openssl ca
+    -config {{ ca_cert_dir }}/ica/{{ ansible_ica_cnf_file }}
+    -in /tmp/ica.csr
+    -out {{ ca_cert_dir }}/ica/ica.crt
+    -days 3650
+    -batch
+    -rand_serial
+    {% if ca_ica_extensions is defined %}
+    -extensions {{ ca_ica_extensions }}
+    {% endif %}
+  when: not ica_stat.stat.exists
+
+- name: create ica crl
+  command: >-
+    openssl ca
+    -gencrl
+    -config {{ ca_cert_dir }}/ica/{{ ansible_ica_cnf_file }}
+    -out {{ ca_cert_dir }}/ica/ica.crl
+    -crldays 365
+  when: not ica_stat.stat.exists

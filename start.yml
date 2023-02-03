@@ -1,0 +1,11 @@
+---
+
+- name: setup ca
+  hosts: ca
+  become: yes
+  tasks:
+
+    - name: setup ca
+      import_role:
+        name: ca
+      tags: ca

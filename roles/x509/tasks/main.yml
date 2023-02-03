@@ -1,0 +1,22 @@
+---
+
+- name: create csr
+  command: >-
+    openssl req
+    -new
+    -out /tmp/{{ item }}.csr
+    -key {{ ca_cert_dir }}/{{ item }}/{{ item }}.key
+    -config {{ ca_cert_dir }}/{{ item }}/{{ item }}.cnf
+  loop: "{{ ca_cert_list }}"
+
+- name: create crt
+  command: >-
+    openssl ca
+    -config {{ ca_cert_dir }}/{{ item }}/{{ item }}.cnf
+    -in /tmp/{{ item }}.csr
+    -out {{ ca_cert_dir }}/{{ item }}/{{ item }}.crt
+    -batch
+    -days 365
+    -extfile {{ ca_cert_dir }}/{{ item }}/{{ item }}.ext
+    -rand_serial
+  loop: "{{ ca_cert_list }}"

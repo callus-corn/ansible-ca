@@ -1,0 +1,11 @@
+---
+
+- name: gen X.509
+  hosts: ca
+  become: yes
+  tasks:
+
+    - name: gen X.509
+      import_role:
+        name: x509
+      tags: x509
