@@ -38,4 +38,3 @@
     -extfile /tmp/{{ item }}.ext
     -rand_serial
   loop: "{{ ca_cert_list }}"
-  failed_when: false
