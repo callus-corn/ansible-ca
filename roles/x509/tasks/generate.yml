@@ -1,0 +1,45 @@
+---
+
+- name: check crt
+  stat:
+    path: "{{ ca_cert_dir }}/{{ target }}/{{ target }}.crt"
+  register: crt_check
+
+- name: mkdir
+  file:
+    path: "{{ ca_cert_dir }}/{{ target }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: not crt_check.stat.exists
+
+- name: put csr
+  copy:
+    src: "{{ ansible_cert_src_dir }}/{{ target }}/{{ target }}.csr"
+    dest: "/tmp/{{ target }}.csr"
+    owner: root
+    group: root
+    mode: 0644
+  when: not crt_check.stat.exists
+
+- name: put ext
+  copy:
+    src: "{{ ansible_cert_src_dir }}/{{ target }}/{{ target }}.ext"
+    dest: "/tmp/{{ target }}.ext"
+    owner: root
+    group: root
+    mode: 0644
+  when: not crt_check.stat.exists
+
+- name: create crt
+  command: >-
+    openssl ca
+    -config {{ ca_cert_dir }}/ica/{{ ca_ica_cnf_file }}
+    -in /tmp/{{ target }}.csr
+    -out {{ ca_cert_dir }}/{{ target }}/{{ target }}.crt
+    -batch
+    -days 365
+    -extfile /tmp/{{ target }}.ext
+    -rand_serial
+  when: not crt_check.stat.exists

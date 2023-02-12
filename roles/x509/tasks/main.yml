@@ -1,40 +1,6 @@
 ---
 
-- name: mkdir
-  file:
-    path: "{{ ca_cert_dir }}/{{ item }}"
-    state: directory
-    owner: root
-    group: root
-    mode: 0755
+- include_tasks: generate.yml
   loop: "{{ ca_cert_list }}"
-
-- name: put csr
-  copy:
-    src: "{{ ansible_cert_src_dir }}/{{ item }}/{{ item }}.csr"
-    dest: "/tmp/{{ item }}.csr"
-    owner: root
-    group: root
-    mode: 0644
-  loop: "{{ ca_cert_list }}"
-
-- name: put ext
-  copy:
-    src: "{{ ansible_cert_src_dir }}/{{ item }}/{{ item }}.ext"
-    dest: "/tmp/{{ item }}.ext"
-    owner: root
-    group: root
-    mode: 0644
-  loop: "{{ ca_cert_list }}"
-
-- name: create crt
-  command: >-
-    openssl ca
-    -config {{ ca_cert_dir }}/ica/{{ ca_ica_cnf_file }}
-    -in /tmp/{{ item }}.csr
-    -out {{ ca_cert_dir }}/{{ item }}/{{ item }}.crt
-    -batch
-    -days 365
-    -extfile /tmp/{{ item }}.ext
-    -rand_serial
-  loop: "{{ ca_cert_list }}"
+  loop_control:
+    loop_var: target
